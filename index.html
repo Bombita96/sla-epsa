@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SLA Dashboard · EPSA / Presis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f1117;--bg2:#161820;--bg3:#1e2130;--bg4:#252840;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--text:#e8eaf2;--text2:#8b8fa8;--text3:#555870;--accent:#5b6ef5;--accent2:#7c8ff7;--green:#2ecc8a;--green-bg:rgba(46,204,138,0.1);--red:#f25c5c;--red-bg:rgba(242,92,92,0.1);--amber:#f5a623;--amber-bg:rgba(245,166,35,0.1);--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;}
+.app{display:flex;flex-direction:column;min-height:100vh;}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:50;}
+.topbar-left{display:flex;align-items:center;gap:12px;}
+.logo{font-size:13px;font-weight:600;color:var(--text);letter-spacing:.04em;}
+.logo span{color:var(--accent2);}
+.divider{width:1px;height:20px;background:var(--border2);}
+.subtitle{font-size:12px;color:var(--text3);font-family:var(--mono);}
+.topbar-right{display:flex;gap:8px;align-items:center;}
+.main{padding:1.5rem 2rem 3rem;max-width:1400px;margin:0 auto;width:100%;}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem;}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;transition:border-color .2s;}
+.metric:hover{border-color:var(--border2);}
+.metric-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+.metric-val{font-size:32px;font-weight:600;line-height:1;}
+.metric-val.green{color:var(--green);}
+.metric-val.red{color:var(--red);}
+.metric-val.accent{color:var(--accent2);}
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:1rem;flex-wrap:wrap;}
+.toolbar select{background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:13px;padding:7px 12px;border-radius:7px;outline:none;transition:border-color .2s;appearance:none;}
+.toolbar select:focus{border-color:var(--accent);}
+.search-wrap{flex:1;min-width:160px;position:relative;}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);width:14px;height:14px;pointer-events:none;}
+.search-wrap input{width:100%;padding:7px 12px 7px 32px;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:var(--font);font-size:13px;border-radius:7px;outline:none;transition:border-color .2s;}
+.search-wrap input:focus{border-color:var(--accent);}
+.search-wrap input::placeholder{color:var(--text3);}
+.btn{font-family:var(--font);font-size:13px;font-weight:500;padding:7px 14px;border-radius:7px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;white-space:nowrap;}
+.btn:hover{background:var(--bg4);}
+.btn-accent{background:var(--accent);border-color:var(--accent);color:#fff;}
+.btn-accent:hover{background:var(--accent2);border-color:var(--accent2);}
+.btn-green{background:var(--green-bg);border-color:rgba(46,204,138,0.3);color:var(--green);}
+.btn-green:hover{background:rgba(46,204,138,0.18);}
+.table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;min-width:900px;}
+thead{background:var(--bg3);}
+th{padding:10px 14px;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);}
+td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:13px;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.015);}
+.td-id{font-family:var(--mono);font-size:12px;color:var(--text2);white-space:nowrap;}
+.td-date{font-family:var(--mono);font-size:11px;color:var(--text2);white-space:nowrap;}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
+.badge-critical{background:rgba(242,92,92,0.12);color:#f25c5c;}
+.badge-high{background:rgba(245,166,35,0.12);color:#f5a623;}
+.badge-medium{background:rgba(91,110,245,0.15);color:#7c8ff7;}
+.badge-low{background:rgba(46,204,138,0.12);color:#2ecc8a;}
+.badge-abierto{background:rgba(245,166,35,0.12);color:#f5a623;}
+.badge-progreso{background:rgba(91,110,245,0.15);color:#7c8ff7;}
+.badge-espera{background:rgba(139,143,168,0.15);color:#8b8fa8;}
+.badge-completado{background:rgba(46,204,138,0.1);color:#2ecc8a;}
+.badge-nuevo{background:rgba(139,143,168,0.1);color:#555870;}
+.sla-ok{display:inline-flex;align-items:center;gap:5px;color:var(--green);font-size:12px;font-weight:500;}
+.sla-breach{display:inline-flex;align-items:center;gap:5px;color:var(--red);font-size:12px;font-weight:500;}
+.sla-pend{display:inline-flex;align-items:center;gap:5px;color:var(--amber);font-size:12px;font-weight:500;}
+.sla-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.sla-ok .sla-dot{background:var(--green);box-shadow:0 0 6px var(--green);}
+.sla-breach .sla-dot{background:var(--red);box-shadow:0 0 6px var(--red);}
+.sla-pend .sla-dot{background:var(--amber);box-shadow:0 0 6px var(--amber);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.tipo-tag{font-size:11px;color:var(--text3);}
+.btn-edit{background:none;border:1px solid var(--border);color:var(--text3);font-size:11px;padding:3px 8px;border-radius:5px;cursor:pointer;font-family:var(--font);transition:all .15s;}
+.btn-edit:hover{border-color:var(--border2);color:var(--text2);background:var(--bg3);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:1.75rem;width:520px;max-width:95vw;max-height:92vh;overflow-y:auto;animation:modalIn .2s ease;}
+@keyframes modalIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.modal h3{font-size:15px;font-weight:600;margin-bottom:1.25rem;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-row{margin-bottom:10px;}
+.form-row label{display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+.form-row input,.form-row select,.form-row textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:var(--font);font-size:13px;padding:8px 12px;border-radius:7px;outline:none;transition:border-color .2s;}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--accent);}
+.form-row textarea{resize:vertical;min-height:72px;}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem;}
+.sla-info{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:1rem;display:flex;gap:16px;flex-wrap:wrap;}
+.empty{text-align:center;padding:3rem;color:var(--text3);font-size:13px;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px;}
+@media(max-width:768px){.main{padding:1rem;}.topbar{padding:0 1rem;}.metrics{grid-template-columns:repeat(2,1fr);}.form-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="logo">EPSA <span>/</span> Presis</div>
+      <div class="divider"></div>
+      <div class="subtitle">SLA Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-green" onclick="exportCSV()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="21" y1="15" x2="21" y2="3"/></svg>
+        Exportar CSV
+      </button>
+      <button class="btn btn-accent" onclick="openModal(null)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nuevo ticket
+      </button>
+    </div>
+  </header>
+  <main class="main">
+    <div class="metrics" id="metrics"></div>
+    <div class="sla-info">
+      <span>⏱ Critical / High → 2hs hábiles</span>
+      <span>⏱ Medium → 24hs hábiles</span>
+      <span>⏱ Low → 48hs hábiles</span>
+      <span>📅 Lun–Vie 8–18hs</span>
+    </div>
+    <div class="toolbar">
+      <select id="flt-estado" onchange="render()">
+        <option value="">Todos los estados</option>
+        <option value="Abierto">Abierto</option>
+        <option value="En Progreso">En Progreso</option>
+        <option value="Esperando respuesta">Esperando respuesta</option>
+        <option value="Nuevos Tickets">Nuevos Tickets</option>
+        <option value="Completado">Completado</option>
+      </select>
+      <select id="flt-urgencia" onchange="render()">
+        <option value="">Toda urgencia</option>
+        <option value="Critical">Critical</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+      <select id="flt-sla" onchange="render()">
+        <option value="">Todo SLA</option>
+        <option value="cumplido">Cumplido</option>
+        <option value="vencido">Vencido</option>
+        <option value="pendiente">Pendiente</option>
+      </select>
+      <div class="search-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="flt-txt" placeholder="Buscar por N° o nombre..." oninput="render()">
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>N° ticket</th><th>Título</th><th>Tipo</th><th>Urgencia</th><th>Estado</th>
+            <th>Fecha inicio</th><th>Fecha cierre</th><th>SLA</th><th>Comentarios</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">Registrar ticket</h3>
+    <div class="form-row"><label>N° de ticket (Jira)</label><input type="text" id="f-id" placeholder="SN-000"></div>
+    <div class="form-row"><label>Título</label><input type="text" id="f-titulo" placeholder="Descripción del ticket"></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Tipo</label>
+        <select id="f-tipo"><option>Reportar problema o incidente</option><option>Solicitar una nueva funcionalidad</option><option>Realizar una consulta</option><option>Administracion y Comercial</option></select>
+      </div>
+      <div class="form-row"><label>Urgencia</label>
+        <select id="f-urgencia"><option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option></select>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Estado</label>
+        <select id="f-estado" onchange="toggleCierre()"><option>Abierto</option><option>En Progreso</option><option>Esperando respuesta</option><option>Nuevos Tickets</option><option>Completado</option></select>
+      </div>
+      <div class="form-row"><label>Fecha y hora de apertura</label><input type="datetime-local" id="f-inicio"></div>
+    </div>
+    <div class="form-row" id="row-cierre"><label>Fecha y hora de cierre</label><input type="datetime-local" id="f-cierre"></div>
+    <div class="form-row"><label>Comentarios</label><textarea id="f-notas" placeholder="Novedades, aclaraciones, contexto..."></textarea></div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-accent" onclick="guardar()">Guardar ticket</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SLA_HS={Critical:2,High:2,Medium:24,Low:48};
+const TICKETS_DEFAULT=[
+  {id:'SN-223',titulo:'Modificacion texto tienda nube',tipo:'Realizar una consulta',urgencia:'Low',estado:'Completado',inicio:'2026-04-07T14:52:00',cierre:'2026-04-13T17:29:00',notas:'Texto actualizado por Giuliana.'},
+  {id:'SN-304',titulo:'Problema con guias NX',tipo:'Realizar una consulta',urgencia:'Low',estado:'Completado',inicio:'2026-04-14T15:57:00',cierre:'2026-04-15T11:48:00',notas:'Completado.'},
+  {id:'SN-306',titulo:'Integracion EPSA - Gadini',tipo:'Realizar una consulta',urgencia:'Low',estado:'Completado',inicio:'2026-04-14T15:57:00',cierre:'2026-04-15T11:34:00',notas:'Gonzalo indicó dónde descargar el instalador de Woocommerce desde ePresis.'},
+  {id:'SN-426',titulo:'Stock -1 Andromaco',tipo:'Reportar problema o incidente',urgencia:'High',estado:'Completado',inicio:'2026-04-20T16:27:00',cierre:'2026-05-19T12:39:00',notas:'Se requiere política interna de carga con lote para evitar negativos.'},
+  {id:'SN-431',titulo:'Modificacion etiqueta - IMP. PREDESPACHO',tipo:'Solicitar una nueva funcionalidad',urgencia:'Medium',estado:'Completado',inicio:'2026-04-21T13:14:00',cierre:'2026-05-08T16:36:00',notas:'Nicolás actualizó producción el 08/05. Requirió nueva versión de la app.'},
+  {id:'SN-474',titulo:'Error Api v2 generacion de guias "DESA"',tipo:'Reportar problema o incidente',urgencia:'High',estado:'Completado',inicio:'2026-04-23T11:12:00',cierre:'2026-04-23T12:40:00',notas:'Gonzalo resolvió en ~1.5hs. Guía de prueba generada exitosamente.'},
+  {id:'SN-544',titulo:'Generar reporte/SLA (DESA)',tipo:'Reportar problema o incidente',urgencia:'High',estado:'Completado',inicio:'2026-04-27T13:29:00',cierre:'2026-04-29T11:07:00',notas:'Resuelto por Guille el 29/04.'},
+  {id:'SN-545',titulo:'Error de ruteador "Colores de los servicios"',tipo:'Reportar problema o incidente',urgencia:'High',estado:'Completado',inicio:'2026-04-27T13:47:00',cierre:'2026-05-26T08:29:00',notas:'Matías actualizó desarrollo el 26/05 para pruebas.'},
+  {id:'SN-571',titulo:'Capacitacion Modulo de liquidación y adicionales',tipo:'Administracion y Comercial',urgencia:'Low',estado:'Completado',inicio:'2026-04-27T16:21:00',cierre:'2026-05-30T18:09:00',notas:'Joaquín Tasso realizó la capacitación. Cierre el 30/05.'},
+  {id:'SN-690',titulo:'Stock - Agregar posiciones',tipo:'Reportar problema o incidente',urgencia:'High',estado:'Completado',inicio:'2026-05-05T13:45:00',cierre:'2026-05-11T11:43:00',notas:'Gonzalo resolvió el 11/05.'},
+  {id:'SN-727',titulo:'Problema con notas de pedidos',tipo:'Reportar problema o incidente',urgencia:'High',estado:'Completado',inicio:'2026-05-06T16:53:00',cierre:'2026-05-14T16:13:00',notas:'Guille procesó NP 27365 para validar. Facundo confirmó solución el 14/05.'},
+  {id:'SN-750',titulo:'Re ingreso de articulos - Andromaco',tipo:'Reportar problema o incidente',urgencia:'High',estado:'Completado',inicio:'2026-05-08T15:29:00',cierre:'2026-05-11T12:16:00',notas:'Guille eliminó artículos correctamente.'},
+  {id:'SN-802',titulo:'Error HH - No marca en sistema como controlada',tipo:'Reportar problema o incidente',urgencia:'High',estado:'Completado',inicio:'2026-05-11T15:23:00',cierre:'2026-05-19T11:09:00',notas:'Nicolás solucionó control sorter. Requirió actualización de API.'},
+  {id:'SN-840',titulo:'Desarollo: Sorting media milla y Rendiciones de interior',tipo:'Solicitar una nueva funcionalidad',urgencia:'Medium',estado:'En Progreso',inicio:'2026-05-13T11:48:00',cierre:'',notas:'Joaquín estimó 2 semanas. Facundo envió capturas el 26/05.'},
+  {id:'SN-841',titulo:'Integracion con Inner',tipo:'Solicitar una nueva funcionalidad',urgencia:'Medium',estado:'En Progreso',inicio:'2026-05-13T11:51:00',cierre:'',notas:'Será integración Presis/Presis. Pendiente más información de Matías.'},
+  {id:'SN-846',titulo:'ERROR EN PLANILLA 266796 / LUDMILA PEREZ',tipo:'Reportar problema o incidente',urgencia:'Critical',estado:'Abierto',inicio:'2026-05-13T14:52:00',cierre:'',notas:'Pedidos entregados con su usuario pero sin escanear. Impacto Significant/Large.'},
+  {id:'SN-853',titulo:'RENDICIONES DE CHOFERES',tipo:'Reportar problema o incidente',urgencia:'High',estado:'Completado',inicio:'2026-05-14T10:45:00',cierre:'2026-05-15T08:20:00',notas:'Matías corrigió desfasaje numérico el 15/05.'},
+  {id:'SN-910',titulo:'Validaciones app H.H - Fecha y estado final',tipo:'Reportar problema o incidente',urgencia:'High',estado:'Nuevos Tickets',inicio:'2026-05-20T17:54:00',cierre:'',notas:'Matías y Nico pendientes de reunión interna.'},
+  {id:'SN-911',titulo:'Error en cálculo de tarifado al consolidar peso con "Peso Mayor Unitario"',tipo:'Reportar problema o incidente',urgencia:'High',estado:'En Progreso',inicio:'2026-05-20T18:07:00',cierre:'',notas:'Reunión realizada. Pendiente definir operación y nueva reunión.'},
+  {id:'SN-913',titulo:'Actualizar validación de nuevos DNI',tipo:'Solicitar una nueva funcionalidad',urgencia:'Medium',estado:'Completado',inicio:'2026-05-21T09:42:00',cierre:'2026-06-01T15:15:00',notas:'Julieta entregó app ePresis v6.0.9 con soporte para nuevo DNI.'},
+  {id:'SN-915',titulo:'Error al agregar stock en artículo 7793742008627',tipo:'Reportar problema o incidente',urgencia:'High',estado:'Completado',inicio:'2026-05-21T10:07:00',cierre:'2026-05-29T12:25:00',notas:'Artículo sin posiciones asignadas. No es bug del sistema.'},
+  {id:'SN-916',titulo:'Falta de opción "Listar Posiciones" en Gestión ABM',tipo:'Reportar problema o incidente',urgencia:'High',estado:'Completado',inicio:'2026-05-21T10:10:00',cierre:'2026-05-21T11:46:00',notas:'Opción en módulo Stock > Posiciones. Resuelto en ~1.5hs.'},
+  {id:'SN-965',titulo:'Archivos Carga Presis',tipo:'Reportar problema o incidente',urgencia:'High',estado:'Abierto',inicio:'2026-05-26T10:56:00',cierre:'',notas:'18 archivos CSV adjuntos. Silvina recibió la consulta. En análisis.'},
+  {id:'SN-1013',titulo:'Pluggin para Woocomerce - Riiing',tipo:'Realizar una consulta',urgencia:'Low',estado:'Abierto',inicio:'2026-05-29T13:12:00',cierre:'',notas:'Solicitud de instalador para cliente Riiing (ID 1118).'},
+  {id:'SN-1016',titulo:'Fullfilment - Numero de serie',tipo:'Reportar problema o incidente',urgencia:'High',estado:'Abierto',inicio:'2026-05-29T16:05:00',cierre:'',notas:'Silvina derivó al equipo técnico. Asignada el 01/06.'},
+];
+let tickets=[];
+try{const s=JSON.parse(localStorage.getItem('epsa_sla_app')||'null');tickets=(s&&s.length)?s:JSON.parse(JSON.stringify(TICKETS_DEFAULT));}catch(e){tickets=JSON.parse(JSON.stringify(TICKETS_DEFAULT));}
+let editIdx=null;
+function esHabil(d){const dia=d.getDay(),h=d.getHours();return dia>=1&&dia<=5&&h>=8&&h<18;}
+function slaDeadline(ini,urg){if(!ini)return null;let d=new Date(ini),r=SLA_HS[urg]*60,t=new Date(d.getTime()+30*24*3600000);while(r>0&&d<t){d=new Date(d.getTime()+60000);if(esHabil(d))r--;}return d;}
+function evalSla(t){if(!t.inicio)return'sin-fecha';const dl=slaDeadline(t.inicio,t.urgencia);if(t.estado==='Completado'&&t.cierre)return new Date(t.cierre)<=dl?'cumplido':'vencido';if(t.estado==='Completado')return'cumplido';return new Date()>dl?'vencido':'pendiente';}
+function fmt(iso){if(!iso)return'—';const d=new Date(iso);return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '+d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});}
+function badgeUrg(u){const m={Critical:'badge-critical',High:'badge-high',Medium:'badge-medium',Low:'badge-low'};return`<span class="badge ${m[u]||'badge-low'}">${u}</span>`;}
+function badgeEst(e){const m={'Abierto':'badge-abierto','En Progreso':'badge-progreso','Esperando respuesta':'badge-espera','Completado':'badge-completado','Nuevos Tickets':'badge-nuevo'};return`<span class="badge ${m[e]||'badge-nuevo'}">${e}</span>`;}
+function tipoShort(t){return{'Reportar problema o incidente':'Incidente','Solicitar una nueva funcionalidad':'Nueva func.','Realizar una consulta':'Consulta','Administracion y Comercial':'Admin'}[t]||t;}
+function render(){
+  const fE=document.getElementById('flt-estado').value,fU=document.getElementById('flt-urgencia').value,fS=document.getElementById('flt-sla').value,fT=document.getElementById('flt-txt').value.toLowerCase();
+  const f=tickets.filter(t=>{const s=evalSla(t);return(!fE||t.estado===fE)&&(!fU||t.urgencia===fU)&&(!fS||s===fS)&&(!fT||t.id.toLowerCase().includes(fT)||t.titulo.toLowerCase().includes(fT));});
+  const tb=document.getElementById('tbody');
+  if(!f.length){tb.innerHTML='<tr><td colspan="10" class="empty">No hay tickets que coincidan con los filtros</td></tr>';return;}
+  tb.innerHTML=f.map(t=>{
+    const ri=tickets.indexOf(t),sla=evalSla(t);
+    let sh;
+    if(sla==='cumplido')sh='<span class="sla-ok"><span class="sla-dot"></span>Cumplido</span>';
+    else if(sla==='vencido')sh='<span class="sla-breach"><span class="sla-dot"></span>Vencido</span>';
+    else if(sla==='pendiente')sh='<span class="sla-pend"><span class="sla-dot"></span>Pendiente</span>';
+    else sh='<span style="color:#555870;font-size:12px">Sin fecha</span>';
+    return`<tr><td class="td-id">${t.id}</td><td style="max-width:220px;font-size:13px">${t.titulo}</td><td><span class="tipo-tag">${tipoShort(t.tipo)}</span></td><td>${badgeUrg(t.urgencia)}</td><td>${badgeEst(t.estado)}</td><td class="td-date">${fmt(t.inicio)}</td><td class="td-date">${fmt(t.cierre)}</td><td>${sh}</td><td><div style="font-size:12px;color:#8b8fa8;max-width:180px;word-break:break-word">${t.notas||'—'}</div></td><td><button class="btn-edit" onclick="openModal(${ri})">editar</button></td></tr>`;
+  }).join('');
+  const total=tickets.length,cumplidos=tickets.filter(t=>evalSla(t)==='cumplido').length,vencidos=tickets.filter(t=>evalSla(t)==='vencido').length,pct=total?Math.round(cumplidos/total*100):0;
+  document.getElementById('metrics').innerHTML=`<div class="metric"><div class="metric-label">Total tickets</div><div class="metric-val">${total}</div></div><div class="metric"><div class="metric-label">SLA cumplido</div><div class="metric-val green">${cumplidos}</div></div><div class="metric"><div class="metric-label">SLA vencido</div><div class="metric-val red">${vencidos}</div></div><div class="metric"><div class="metric-label">Cumplimiento</div><div class="metric-val accent">${pct}%</div></div>`;
+}
+function toggleCierre(){document.getElementById('row-cierre').style.display=document.getElementById('f-estado').value==='Completado'?'':'none';}
+function openModal(idx){
+  editIdx=idx;document.getElementById('modal-title').textContent=idx===null?'Registrar ticket':'Editar ticket';
+  const pad=n=>String(n).padStart(2,'0'),toLocal=iso=>{if(!iso)return'';const d=new Date(iso);return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;};
+  if(idx===null){const now=new Date();['f-id','f-titulo','f-cierre','f-notas'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-tipo').value='Reportar problema o incidente';document.getElementById('f-urgencia').value='High';document.getElementById('f-estado').value='Abierto';document.getElementById('f-inicio').value=toLocal(now.toISOString());}
+  else{const t=tickets[idx];document.getElementById('f-id').value=t.id;document.getElementById('f-titulo').value=t.titulo;document.getElementById('f-tipo').value=t.tipo;document.getElementById('f-urgencia').value=t.urgencia;document.getElementById('f-estado').value=t.estado;document.getElementById('f-inicio').value=toLocal(t.inicio);document.getElementById('f-cierre').value=toLocal(t.cierre);document.getElementById('f-notas').value=t.notas;}
+  toggleCierre();document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function guardar(){
+  const id=document.getElementById('f-id').value.trim(),titulo=document.getElementById('f-titulo').value.trim();
+  if(!id||!titulo){alert('Completá el N° y el título');return;}
+  const estado=document.getElementById('f-estado').value,cv=document.getElementById('f-cierre').value;
+  const t={id,titulo,tipo:document.getElementById('f-tipo').value,urgencia:document.getElementById('f-urgencia').value,estado,inicio:document.getElementById('f-inicio').value?new Date(document.getElementById('f-inicio').value).toISOString():'',cierre:(estado==='Completado'&&cv)?new Date(cv).toISOString():'',notas:document.getElementById('f-notas').value.trim()};
+  if(editIdx===null)tickets.push(t);else tickets[editIdx]=t;
+  localStorage.setItem('epsa_sla_app',JSON.stringify(tickets));
+  closeModal();render();
+}
+function exportCSV(){
+  const rows=[['N° Ticket','Título','Tipo','Urgencia','Estado','Fecha inicio','Fecha cierre','SLA','Comentarios']];
+  tickets.forEach(t=>rows.push([t.id,t.titulo,t.tipo,t.urgencia,t.estado,fmt(t.inicio),fmt(t.cierre),evalSla(t),t.notas]));
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='SLA_EPSA_Presis.csv';a.click();URL.revokeObjectURL(url);
+}
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
+render();setInterval(render,60000);
+</script>
+</body>
+</html>
