@@ -145,6 +145,12 @@ tr:hover td{background:rgba(255,255,255,0.015);}
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="flt-txt" placeholder="Buscar por N° o nombre..." oninput="render()">
       </div>
+      <select id="flt-orden" onchange="render()" title="Ordenar por fecha">
+        <option value="inicio-desc">↓ Fecha inicio</option>
+        <option value="inicio-asc">↑ Fecha inicio</option>
+        <option value="cierre-desc">↓ Fecha cierre</option>
+        <option value="cierre-asc">↑ Fecha cierre</option>
+      </select>
     </div>
     <div class="table-wrap">
       <table>
@@ -229,7 +235,14 @@ function badgeEst(e){const m={'Abierto':'badge-abierto','En Progreso':'badge-pro
 function tipoShort(t){return{'Reportar problema o incidente':'Incidente','Solicitar una nueva funcionalidad':'Nueva func.','Realizar una consulta':'Consulta','Administracion y Comercial':'Admin'}[t]||t;}
 function render(){
   const fE=document.getElementById('flt-estado').value,fU=document.getElementById('flt-urgencia').value,fS=document.getElementById('flt-sla').value,fT=document.getElementById('flt-txt').value.toLowerCase();
-  const f=tickets.filter(t=>{const s=evalSla(t);return(!fE||t.estado===fE)&&(!fU||t.urgencia===fU)&&(!fS||s===fS)&&(!fT||t.id.toLowerCase().includes(fT)||t.titulo.toLowerCase().includes(fT));});
+  const orden=document.getElementById('flt-orden').value;
+  let f=tickets.filter(t=>{const s=evalSla(t);return(!fE||t.estado===fE)&&(!fU||t.urgencia===fU)&&(!fS||s===fS)&&(!fT||t.id.toLowerCase().includes(fT)||t.titulo.toLowerCase().includes(fT));});
+  f.sort((a,b)=>{
+    const [campo,dir]=orden.split('-');
+    const va=a[campo]?new Date(a[campo]):new Date(0);
+    const vb=b[campo]?new Date(b[campo]):new Date(0);
+    return dir==='desc'?vb-va:va-vb;
+  });
   const tb=document.getElementById('tbody');
   if(!f.length){tb.innerHTML='<tr><td colspan="10" class="empty">No hay tickets que coincidan con los filtros</td></tr>';return;}
   tb.innerHTML=f.map(t=>{
@@ -239,7 +252,8 @@ function render(){
     else if(sla==='vencido')sh='<span class="sla-breach"><span class="sla-dot"></span>Vencido</span>';
     else if(sla==='pendiente')sh='<span class="sla-pend"><span class="sla-dot"></span>Pendiente</span>';
     else sh='<span style="color:#555870;font-size:12px">Sin fecha</span>';
-    return`<tr><td class="td-id">${t.id}</td><td style="max-width:220px;font-size:13px">${t.titulo}</td><td><span class="tipo-tag">${tipoShort(t.tipo)}</span></td><td>${badgeUrg(t.urgencia)}</td><td>${badgeEst(t.estado)}</td><td class="td-date">${fmt(t.inicio)}</td><td class="td-date">${fmt(t.cierre)}</td><td>${sh}</td><td><div style="font-size:12px;color:#8b8fa8;max-width:180px;word-break:break-word">${t.notas||'—'}</div></td><td><button class="btn-edit" onclick="openModal(${ri})">editar</button></td></tr>`;
+    const notaCorta = t.notas && t.notas.length > 80 ? t.notas.substring(0,80)+'...' : (t.notas||'—');
+    return`<tr><td class="td-id">${t.id}</td><td style="max-width:220px;font-size:13px">${t.titulo}</td><td><span class="tipo-tag">${tipoShort(t.tipo)}</span></td><td>${badgeUrg(t.urgencia)}</td><td>${badgeEst(t.estado)}</td><td class="td-date">${fmt(t.inicio)}</td><td class="td-date">${fmt(t.cierre)}</td><td>${sh}</td><td><div style="font-size:12px;color:#8b8fa8;max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="${t.notas||''}">${notaCorta}</div></td><td><button class="btn-edit" onclick="openModal(${ri})">editar</button></td></tr>`;
   }).join('');
   const total=tickets.length,cumplidos=tickets.filter(t=>evalSla(t)==='cumplido').length,vencidos=tickets.filter(t=>evalSla(t)==='vencido').length,pct=total?Math.round(cumplidos/total*100):0;
   document.getElementById('metrics').innerHTML=`<div class="metric"><div class="metric-label">Total tickets</div><div class="metric-val">${total}</div></div><div class="metric"><div class="metric-label">SLA cumplido</div><div class="metric-val green">${cumplidos}</div></div><div class="metric"><div class="metric-label">SLA vencido</div><div class="metric-val red">${vencidos}</div></div><div class="metric"><div class="metric-label">Cumplimiento</div><div class="metric-val accent">${pct}%</div></div>`;
